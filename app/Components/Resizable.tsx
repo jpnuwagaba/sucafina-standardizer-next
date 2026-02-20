@@ -1,3 +1,5 @@
+"use client"
+
 import React from 'react'
 import {
     ResizableHandle,
@@ -6,8 +8,18 @@ import {
 } from "@/components/ui/resizable"
 import Map from './Map'
 import StandardsPanel from './StandardsPanel'
+import { standard1Rows, type Standard1Row } from "@/app/data/standard1"
 
 const Resizable = () => {
+    const [visibleRows, setVisibleRows] = React.useState<Standard1Row[]>(standard1Rows);
+    const [selectedRow, setSelectedRow] = React.useState<Standard1Row | null>(null);
+    const [selectedRowTrigger, setSelectedRowTrigger] = React.useState(0);
+
+    const handleRowSelect = React.useCallback((row: Standard1Row) => {
+        setSelectedRow(row);
+        setSelectedRowTrigger((prev) => prev + 1);
+    }, []);
+
     return (
         <ResizablePanelGroup
             orientation="vertical"
@@ -24,7 +36,11 @@ const Resizable = () => {
                     <ResizablePanel defaultSize="60%" className="relative">
                         {/* Use a wrapper div to get size */}
                         <div className="w-full h-full" style={{position: 'relative', width: '100%', height: '100%'}}>
-                            <Map />
+                            <Map
+                                rows={visibleRows}
+                                selectedRow={selectedRow}
+                                selectedRowTrigger={selectedRowTrigger}
+                            />
                         </div>
                     </ResizablePanel>
                     <ResizableHandle withHandle />
@@ -38,7 +54,10 @@ const Resizable = () => {
             <ResizableHandle withHandle />
             <ResizablePanel defaultSize="40%">
                 <div className="h-full w-full p-2">
-                    <StandardsPanel />
+                    <StandardsPanel
+                        onVisibleRowsChange={setVisibleRows}
+                        onRowSelect={handleRowSelect}
+                    />
                 </div>
             </ResizablePanel>
         </ResizablePanelGroup>

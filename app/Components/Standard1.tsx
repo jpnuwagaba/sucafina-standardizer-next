@@ -10,30 +10,11 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { standard1Rows, type Standard1Row } from "@/app/data/standard1";
 
-type Standard1Row = {
-  sucafina_plot_id: string;
-  supplier_plot_id: string;
-  farmer_id: string;
-  supplier_code: string;
-  plot_region: string;
-  plot_district: string;
-  plot_area_ha: number | null;
-  plot_longitude: number | null;
-  plot_latitude: number | null;
-  plot_gps_point: string;
-  plot_gps_polygon: string;
-  plot_wkt: string;
-  is_geodata_validated: boolean | null;
-  is_cafe_practices_certified: boolean | null;
-  is_rfa_utz_certified: boolean | null;
-  is_impact_certified: boolean | null;
-  is_organic_certified: boolean | null;
-  is_4c_certified: boolean | null;
-  is_fairtrade_certified: boolean | null;
-  other_certification_name: string;
-  plot_supply_chain: string;
-  plot_farmer_group: string;
+type Standard1Props = {
+  onVisibleRowsChange?: (rows: Standard1Row[]) => void;
+  onRowSelect?: (row: Standard1Row) => void;
 };
 
 const columns: ColumnDef<Standard1Row>[] = [
@@ -67,87 +48,12 @@ const columns: ColumnDef<Standard1Row>[] = [
   { accessorKey: "plot_farmer_group", header: "plot_farmer_group" },
 ];
 
-const data: Standard1Row[] = [
-  {
-    sucafina_plot_id: "SUC-0001",
-    supplier_plot_id: "SUP-PLT-1001",
-    farmer_id: "FARM-9001",
-    supplier_code: "UG-KLA-01",
-    plot_region: "Central",
-    plot_district: "Mukono",
-    plot_area_ha: 1.75,
-    plot_longitude: 32.8012,
-    plot_latitude: 0.3541,
-    plot_gps_point: "POINT(32.8012 0.3541)",
-    plot_gps_polygon: "POLYGON((32.8009 0.3539,32.8015 0.3539,32.8015 0.3543,32.8009 0.3543,32.8009 0.3539))",
-    plot_wkt: "POINT(32.8012 0.3541)",
-    is_geodata_validated: true,
-    is_cafe_practices_certified: true,
-    is_rfa_utz_certified: false,
-    is_impact_certified: true,
-    is_organic_certified: false,
-    is_4c_certified: true,
-    is_fairtrade_certified: false,
-    other_certification_name: "Rainforest Pilot",
-    plot_supply_chain: "Direct Trade",
-    plot_farmer_group: "Mukono Growers A",
-  },
-  {
-    sucafina_plot_id: "SUC-0002",
-    supplier_plot_id: "SUP-PLT-1002",
-    farmer_id: "FARM-9002",
-    supplier_code: "UG-MBR-03",
-    plot_region: "Western",
-    plot_district: "Mbarara",
-    plot_area_ha: 2.2,
-    plot_longitude: 30.6461,
-    plot_latitude: -0.6072,
-    plot_gps_point: "POINT(30.6461 -0.6072)",
-    plot_gps_polygon: "POLYGON((30.6457 -0.6075,30.6465 -0.6075,30.6465 -0.6069,30.6457 -0.6069,30.6457 -0.6075))",
-    plot_wkt: "POINT(30.6461 -0.6072)",
-    is_geodata_validated: true,
-    is_cafe_practices_certified: false,
-    is_rfa_utz_certified: true,
-    is_impact_certified: false,
-    is_organic_certified: true,
-    is_4c_certified: false,
-    is_fairtrade_certified: true,
-    other_certification_name: "",
-    plot_supply_chain: "Cooperative",
-    plot_farmer_group: "Ankole Coffee Union",
-  },
-  {
-    sucafina_plot_id: "SUC-0003",
-    supplier_plot_id: "SUP-PLT-1003",
-    farmer_id: "FARM-9003",
-    supplier_code: "UG-GUL-08",
-    plot_region: "Northern",
-    plot_district: "Gulu",
-    plot_area_ha: 0.95,
-    plot_longitude: 32.299,
-    plot_latitude: 2.7746,
-    plot_gps_point: "POINT(32.299 2.7746)",
-    plot_gps_polygon: "POLYGON((32.2987 2.7743,32.2993 2.7743,32.2993 2.7749,32.2987 2.7749,32.2987 2.7743))",
-    plot_wkt: "POINT(32.299 2.7746)",
-    is_geodata_validated: false,
-    is_cafe_practices_certified: null,
-    is_rfa_utz_certified: null,
-    is_impact_certified: false,
-    is_organic_certified: null,
-    is_4c_certified: false,
-    is_fairtrade_certified: null,
-    other_certification_name: "Pending verification",
-    plot_supply_chain: "Aggregator",
-    plot_farmer_group: "Acholi Producers B",
-  },
-];
-
-const Standard1 = () => {
+const Standard1 = ({ onVisibleRowsChange, onRowSelect }: Standard1Props) => {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = React.useState("");
 
   const table = useReactTable({
-    data,
+    data: standard1Rows,
     columns,
     state: {
       sorting,
@@ -165,6 +71,23 @@ const Standard1 = () => {
     enableColumnResizing: true,
     columnResizeMode: "onChange",
   });
+
+  const visibleRows = table.getRowModel().rows.map((row) => row.original);
+  const lastVisibleRowsKeyRef = React.useRef<string>("");
+
+  React.useEffect(() => {
+    if (!onVisibleRowsChange) return;
+
+    const visibleRowsKey = visibleRows
+      .map((row) => row.sucafina_plot_id)
+      .sort()
+      .join("|");
+
+    if (visibleRowsKey === lastVisibleRowsKeyRef.current) return;
+
+    lastVisibleRowsKeyRef.current = visibleRowsKey;
+    onVisibleRowsChange(visibleRows);
+  }, [onVisibleRowsChange, visibleRows]);
 
   return (
     <div className="h-full w-full overflow-hidden">
@@ -216,7 +139,11 @@ const Standard1 = () => {
           <tbody>
             {table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row) => (
-                <tr key={row.id}>
+                <tr
+                  key={row.id}
+                  onClick={() => onRowSelect?.(row.original)}
+                  className="cursor-pointer hover:bg-slate-50"
+                >
                   {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}
