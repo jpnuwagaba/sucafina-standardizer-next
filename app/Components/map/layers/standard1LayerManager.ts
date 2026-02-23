@@ -14,14 +14,9 @@ export const STANDARD1_POINT_LAYER_ID = "standard1-points-layer";
 export const STANDARD1_POLYGON_FILL_LAYER_ID = "standard1-polygons-fill-layer";
 export const STANDARD1_POLYGON_OUTLINE_LAYER_ID = "standard1-polygons-outline-layer";
 
-const validationColorExpression: ExpressionSpecification = [
-  "case",
-  ["==", ["get", "is_geodata_validated"], true],
-  "#16a34a",
-  ["==", ["get", "is_geodata_validated"], false],
-  "#dc2626",
-  "#2563eb",
-];
+const DEFAULT_PLOT_COLOR = "#16a34a";
+const FILTERED_PLOT_COLOR = "#f97316";
+const SELECTED_PLOT_COLOR = "#facc15";
 
 const standard1PointsLayer: CircleLayerSpecification = {
   id: STANDARD1_POINT_LAYER_ID,
@@ -30,7 +25,7 @@ const standard1PointsLayer: CircleLayerSpecification = {
   filter: ["==", ["geometry-type"], "Point"],
   paint: {
     "circle-radius": 6,
-    "circle-color": validationColorExpression,
+    "circle-color": DEFAULT_PLOT_COLOR,
     "circle-stroke-color": "#ffffff",
     "circle-stroke-width": 1.25,
     "circle-opacity": 0.95,
@@ -43,7 +38,7 @@ const standard1PolygonFillLayer: FillLayerSpecification = {
   source: STANDARD1_SOURCE_ID,
   filter: ["==", ["geometry-type"], "Polygon"],
   paint: {
-    "fill-color": validationColorExpression,
+    "fill-color": DEFAULT_PLOT_COLOR,
     "fill-opacity": 0.2,
   },
 };
@@ -54,13 +49,50 @@ const standard1PolygonOutlineLayer: LineLayerSpecification = {
   source: STANDARD1_SOURCE_ID,
   filter: ["==", ["geometry-type"], "Polygon"],
   paint: {
-    "line-color": validationColorExpression,
+    "line-color": DEFAULT_PLOT_COLOR,
     "line-width": 2,
     "line-opacity": 0.9,
   },
 };
 
-export function upsertStandard1Layer(map: Map, data: Standard1FeatureCollection) {
+function buildColorExpression(
+  filteredPlotIds: string[],
+  selectedPlotId: string | null,
+): ExpressionSpecification {
+  return [
+    "case",
+    ["==", ["get", "sucafina_plot_id"], selectedPlotId ?? ""],
+    SELECTED_PLOT_COLOR,
+    ["in", ["get", "sucafina_plot_id"], ["literal", filteredPlotIds]],
+    FILTERED_PLOT_COLOR,
+    DEFAULT_PLOT_COLOR,
+  ];
+}
+
+export function updateStandard1LayerColors(
+  map: Map,
+  filteredPlotIds: string[],
+  selectedPlotId: string | null,
+) {
+  const colorExpression = buildColorExpression(filteredPlotIds, selectedPlotId);
+
+  if (map.getLayer(STANDARD1_POINT_LAYER_ID)) {
+    map.setPaintProperty(STANDARD1_POINT_LAYER_ID, "circle-color", colorExpression);
+  }
+  if (map.getLayer(STANDARD1_POLYGON_FILL_LAYER_ID)) {
+    map.setPaintProperty(STANDARD1_POLYGON_FILL_LAYER_ID, "fill-color", colorExpression);
+  }
+  if (map.getLayer(STANDARD1_POLYGON_OUTLINE_LAYER_ID)) {
+    map.setPaintProperty(STANDARD1_POLYGON_OUTLINE_LAYER_ID, "line-color", colorExpression);
+  }
+}
+
+export function upsertStandard1Layer(
+  map: Map,
+  data: Standard1FeatureCollection,
+  filteredPlotIds: string[],
+  selectedPlotId: string | null,
+) {
   const source = map.getSource(STANDARD1_SOURCE_ID) as GeoJSONSource | undefined;
 
   if (source) {
@@ -81,6 +113,8 @@ export function upsertStandard1Layer(map: Map, data: Standard1FeatureCollection)
   if (!map.getLayer(STANDARD1_POINT_LAYER_ID)) {
     map.addLayer(standard1PointsLayer);
   }
+
+  updateStandard1LayerColors(map, filteredPlotIds, selectedPlotId);
 }
 
 export function removeStandard1Layer(map: Map) {

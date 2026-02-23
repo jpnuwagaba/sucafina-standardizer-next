@@ -6,10 +6,11 @@ export type ParsedWktGeometry =
 
 export function parseWktGeometry(wkt: string): ParsedWktGeometry | null {
   const value = wkt.trim();
-  const upper = value.toUpperCase();
+  if (!value) return null;
 
-  if (upper.startsWith("POINT(") && value.endsWith(")")) {
-    const coordinateText = value.slice("POINT(".length, -1).trim();
+  const pointMatch = value.match(/^POINT\s*\(\s*([^)]+)\s*\)$/i);
+  if (pointMatch) {
+    const coordinateText = pointMatch[1].trim();
     const [lngText, latText] = coordinateText.split(/\s+/);
     const lng = Number(lngText);
     const lat = Number(latText);
@@ -17,8 +18,9 @@ export function parseWktGeometry(wkt: string): ParsedWktGeometry | null {
     return { type: "Point", coordinates: [lng, lat] };
   }
 
-  if (upper.startsWith("POLYGON((") && value.endsWith("))")) {
-    const ringSection = value.slice("POLYGON((".length, -2);
+  const polygonMatch = value.match(/^POLYGON\s*\(\s*\(([\s\S]+)\)\s*\)$/i);
+  if (polygonMatch) {
+    const ringSection = polygonMatch[1].trim();
     const rings = ringSection
       .split(/\)\s*,\s*\(/)
       .map((ringText) =>

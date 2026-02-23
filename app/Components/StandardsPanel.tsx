@@ -7,11 +7,18 @@ import type { Standard1Row } from "@/app/data/standard1";
 type StandardTab = "standard1" | "impact";
 
 type StandardsPanelProps = {
+  rows: Standard1Row[];
   onVisibleRowsChange?: (rows: Standard1Row[]) => void;
   onRowSelect?: (row: Standard1Row) => void;
+  selectedRow?: Standard1Row | null;
 };
 
-const StandardsPanel = ({ onVisibleRowsChange, onRowSelect }: StandardsPanelProps) => {
+const StandardsPanel = ({
+  rows,
+  onVisibleRowsChange,
+  onRowSelect,
+  selectedRow = null,
+}: StandardsPanelProps) => {
   const [activeTab, setActiveTab] = React.useState<StandardTab>("standard1");
   const [showImpactAlert, setShowImpactAlert] = React.useState(false);
 
@@ -41,8 +48,10 @@ const StandardsPanel = ({ onVisibleRowsChange, onRowSelect }: StandardsPanelProp
         {activeTab === "standard1" ? (
           <div className="h-full w-full p-2">
             <Standard1
+              rows={rows}
               onVisibleRowsChange={onVisibleRowsChange}
               onRowSelect={onRowSelect}
+              selectedRow={selectedRow}
             />
           </div>
         ) : (

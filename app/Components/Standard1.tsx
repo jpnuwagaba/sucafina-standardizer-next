@@ -10,11 +10,14 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { standard1Rows, type Standard1Row } from "@/app/data/standard1";
+import type { Standard1Row } from "@/app/data/standard1";
+import { ArrowUpNarrowWide , ArrowDownWideNarrow } from 'lucide-react';
 
 type Standard1Props = {
+  rows: Standard1Row[];
   onVisibleRowsChange?: (rows: Standard1Row[]) => void;
   onRowSelect?: (row: Standard1Row) => void;
+  selectedRow?: Standard1Row | null;
 };
 
 const columns: ColumnDef<Standard1Row>[] = [
@@ -48,12 +51,23 @@ const columns: ColumnDef<Standard1Row>[] = [
   { accessorKey: "plot_farmer_group", header: "plot_farmer_group" },
 ];
 
-const Standard1 = ({ onVisibleRowsChange, onRowSelect }: Standard1Props) => {
+const Standard1 = ({
+  rows,
+  onVisibleRowsChange,
+  onRowSelect,
+  selectedRow = null,
+}: Standard1Props) => {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = React.useState("");
 
+  React.useEffect(() => {
+    // New uploads should start from a clean table view.
+    setSorting([]);
+    setGlobalFilter("");
+  }, [rows]);
+
   const table = useReactTable({
-    data: standard1Rows,
+    data: rows,
     columns,
     state: {
       sorting,
@@ -97,7 +111,10 @@ const Standard1 = ({ onVisibleRowsChange, onRowSelect }: Standard1Props) => {
           onChange={(event) => setGlobalFilter(event.target.value)}
           placeholder="Search all columns..."
           className="w-full max-w-sm rounded border px-2 py-1 text-sm"
-        />
+        />        
+        <div className="ml-auto text-xs text-slate-600">
+          {table.getFilteredRowModel().rows.length} of {table.getCoreRowModel().rows.length} rows
+        </div>
       </div>
       <div className="h-[calc(100%-40px)] w-full overflow-auto">
         <table className="w-max min-w-full border-collapse text-xs">
@@ -121,10 +138,8 @@ const Standard1 = ({ onVisibleRowsChange, onRowSelect }: Standard1Props) => {
                           header.column.columnDef.header,
                           header.getContext(),
                         )}
-                    {{
-                      asc: "(asc)",
-                      desc: "(desc)",
-                    }[header.column.getIsSorted() as string] ?? ""}
+                    {header.column.getIsSorted() === "asc" && <ArrowUpNarrowWide  className="w-4 h-4" />}
+                    {header.column.getIsSorted() === "desc" && <ArrowDownWideNarrow className="w-4 h-4" />}
                   </button>
                   <div
                     onMouseDown={header.getResizeHandler()}
@@ -138,11 +153,18 @@ const Standard1 = ({ onVisibleRowsChange, onRowSelect }: Standard1Props) => {
           </thead>
           <tbody>
             {table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
+              table.getRowModel().rows.map((row) => {
+                const isSelected =
+                  selectedRow?.sucafina_plot_id === row.original.sucafina_plot_id;
+
+                return (
                 <tr
                   key={row.id}
                   onClick={() => onRowSelect?.(row.original)}
-                  className="cursor-pointer hover:bg-slate-50"
+                  aria-selected={isSelected}
+                  className={`cursor-pointer hover:bg-slate-100 ${
+                    isSelected ? "bg-[#00777f]/20 hover:bg-sky-100" : ""
+                  }`}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td
@@ -154,7 +176,8 @@ const Standard1 = ({ onVisibleRowsChange, onRowSelect }: Standard1Props) => {
                     </td>
                   ))}
                 </tr>
-              ))
+                );
+              })
             ) : (
               <tr>
                 <td

@@ -16,6 +16,7 @@ interface MapProps {
   className?: string;
   style?: React.CSSProperties;
   rows?: Standard1Row[];
+  filteredPlotIds?: string[];
   selectedRow?: Standard1Row | null;
   selectedRowTrigger?: number;
 }
@@ -24,12 +25,13 @@ export default function MapView({
   className = "",
   style = {},
   rows = standard1Rows,
+  filteredPlotIds = [],
   selectedRow = null,
   selectedRowTrigger = 0,
 }: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const { mapRef, mapError, isMapReady, currentStyle, styleRevision, setMapStyle } = useMapInstance(mapContainer);
-  const { onZoomIn, onZoomOut, onResetView } = useMapCamera(mapRef);
+  const { onZoomIn, onZoomOut, onResetView } = useMapCamera(mapRef, rows);
 
   useMapResize(mapContainer, mapRef);
   useStandard1DevelopmentLayer(
@@ -37,6 +39,7 @@ export default function MapView({
     isMapReady,
     styleRevision,
     rows,
+    filteredPlotIds,
     selectedRow,
     selectedRowTrigger,
   );
