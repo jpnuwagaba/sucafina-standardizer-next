@@ -19,7 +19,7 @@ const Resizable = () => {
     const [selectedRowTrigger, setSelectedRowTrigger] = React.useState(0);
     const [showUnsupportedAlert, setShowUnsupportedAlert] = React.useState(false);
 
-    const handleRowSelect = React.useCallback((row: Standard1Row) => {
+    const handleRowSelect = React.useCallback((row: Standard1Row | null) => {
         setSelectedRow(row);
         setSelectedRowTrigger((prev) => prev + 1);
     }, []);

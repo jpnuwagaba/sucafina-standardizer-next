@@ -9,7 +9,7 @@ type StandardTab = "standard1" | "impact";
 type StandardsPanelProps = {
   rows: Standard1Row[];
   onVisibleRowsChange?: (rows: Standard1Row[]) => void;
-  onRowSelect?: (row: Standard1Row) => void;
+  onRowSelect?: (row: Standard1Row | null) => void;
   selectedRow?: Standard1Row | null;
 };
 

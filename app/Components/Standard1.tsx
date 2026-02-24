@@ -11,12 +11,12 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import type { Standard1Row } from "@/app/data/standard1";
-import { ArrowUpNarrowWide , ArrowDownWideNarrow } from 'lucide-react';
+import { ArrowUpNarrowWide, ArrowDownWideNarrow } from 'lucide-react';
 
 type Standard1Props = {
   rows: Standard1Row[];
   onVisibleRowsChange?: (rows: Standard1Row[]) => void;
-  onRowSelect?: (row: Standard1Row) => void;
+  onRowSelect?: (row: Standard1Row | null) => void;
   selectedRow?: Standard1Row | null;
 };
 
@@ -111,45 +111,61 @@ const Standard1 = ({
           onChange={(event) => setGlobalFilter(event.target.value)}
           placeholder="Search all columns..."
           className="w-full max-w-sm rounded border px-2 py-1 text-sm"
-        />        
+        />
         <div className="ml-auto text-xs text-slate-600">
           {table.getFilteredRowModel().rows.length} of {table.getCoreRowModel().rows.length} rows
+        </div>
+        {/* vertical divider */}
+        <div className="w-px h-4 bg-slate-300" />
+        <div className="flex flex-row items-center">
+          <div className="flex flex-row items-center mr-2">
+            <div className="w-3 h-3 rounded-full bg-[#16a34a] mr-1" />
+            <div className="text-xs text-slate-600">Default</div>
+          </div>
+          <div className="flex flex-row items-center mr-2">
+            <div className="w-3 h-3 rounded-full bg-[#facc15] mr-1" />
+            <div className="text-xs text-slate-600">Selected</div>
+          </div>
+          <div className="flex flex-row items-center mr-2">
+            <div className="w-3 h-3 rounded-full bg-[#f97316] mr-1" />
+            <div className="text-xs text-slate-600">Filtered</div>
+          </div>
         </div>
       </div>
       <div className="h-[calc(100%-40px)] w-full overflow-auto">
         <table className="w-max min-w-full border-collapse text-xs">
           <thead className="sticky top-0 z-10 bg-white">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th
-                  key={header.id}
-                  style={{ width: header.getSize() }}
-                  className="relative border px-2 py-1 text-left font-semibold whitespace-nowrap"
-                >
-                  <button
-                    type="button"
-                    onClick={header.column.getToggleSortingHandler()}
-                    className="inline-flex items-center gap-1"
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    style={{ width: header.getSize() }}
+                    className="relative border px-2 py-1 text-left font-semibold whitespace-nowrap"
                   >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
+                    <button
+                      type="button"
+                      onClick={header.column.getToggleSortingHandler()}
+                      className="inline-flex items-center gap-1"
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
                           header.column.columnDef.header,
                           header.getContext(),
                         )}
-                    {header.column.getIsSorted() === "asc" && <ArrowUpNarrowWide  className="w-4 h-4" />}
-                    {header.column.getIsSorted() === "desc" && <ArrowDownWideNarrow className="w-4 h-4" />}
-                  </button>
-                  <div
-                    onMouseDown={header.getResizeHandler()}
-                    onTouchStart={header.getResizeHandler()}
-                    className="absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none bg-transparent hover:bg-gray-300"
-                  />
-                </th>
-              ))}
-            </tr>
-          ))}
+                      {header.column.getIsSorted() === "asc" && <ArrowUpNarrowWide className="w-4 h-4" />}
+                      {header.column.getIsSorted() === "desc" && <ArrowDownWideNarrow className="w-4 h-4" />}
+                    </button>
+                    <div
+                      onMouseDown={header.getResizeHandler()}
+                      onTouchStart={header.getResizeHandler()}
+                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none bg-transparent hover:bg-gray-300"
+                    />
+                  </th>
+                ))}
+              </tr>
+            ))}
           </thead>
           <tbody>
             {table.getRowModel().rows.length > 0 ? (
@@ -158,24 +174,23 @@ const Standard1 = ({
                   selectedRow?.sucafina_plot_id === row.original.sucafina_plot_id;
 
                 return (
-                <tr
-                  key={row.id}
-                  onClick={() => onRowSelect?.(row.original)}
-                  aria-selected={isSelected}
-                  className={`cursor-pointer hover:bg-slate-100 ${
-                    isSelected ? "bg-[#00777f]/20 hover:bg-sky-100" : ""
-                  }`}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      style={{ width: cell.column.getSize() }}
-                      className="border px-2 py-1 whitespace-nowrap"
-                    >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </tr>
+                  <tr
+                    key={row.id}
+                    onClick={() => onRowSelect?.(isSelected ? null : row.original)}
+                    aria-selected={isSelected}
+                    className={`cursor-pointer hover:bg-slate-100 ${isSelected ? "bg-[#00777f]/20 hover:bg-sky-100" : ""
+                      }`}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <td
+                        key={cell.id}
+                        style={{ width: cell.column.getSize() }}
+                        className="border px-2 py-1 whitespace-nowrap"
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
                 );
               })
             ) : (
