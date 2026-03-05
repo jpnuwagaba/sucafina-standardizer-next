@@ -31,7 +31,13 @@ const columns: ColumnDef<Standard1Row>[] = [
   { accessorKey: "plot_longitude", header: "plot_longitude" },
   { accessorKey: "plot_latitude", header: "plot_latitude" },
   { accessorKey: "plot_gps_point", header: "plot_gps_point" },
-  { accessorKey: "plot_gps_polygon", header: "plot_gps_polygon" },
+  {
+    accessorKey: "plot_gps_polygon",
+    header: "plot_gps_polygon",
+    size: 220,
+    minSize: 80,
+    maxSize: 320,
+  },
   { accessorKey: "plot_wkt", header: "plot_wkt" },
   { accessorKey: "is_geodata_validated", header: "is_geodata_validated" },
   {
@@ -69,6 +75,11 @@ const Standard1 = ({
   const table = useReactTable({
     data: rows,
     columns,
+    defaultColumn: {
+      size: 160,
+      minSize: 60,
+      maxSize: 500,
+    },
     state: {
       sorting,
       globalFilter,
@@ -133,7 +144,10 @@ const Standard1 = ({
         </div>
       </div>
       <div className="h-[calc(100%-40px)] w-full overflow-auto">
-        <table className="w-max min-w-full border-collapse text-xs">
+        <table
+          className="min-w-full table-fixed border-collapse text-xs"
+          style={{ width: table.getTotalSize() }}
+        >
           <thead className="sticky top-0 z-10 bg-white">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
@@ -141,12 +155,12 @@ const Standard1 = ({
                   <th
                     key={header.id}
                     style={{ width: header.getSize() }}
-                    className="relative border px-2 py-1 text-left font-semibold whitespace-nowrap"
+                    className="relative border px-2 py-1 text-left font-semibold whitespace-nowrap overflow-hidden text-ellipsis"
                   >
                     <button
                       type="button"
                       onClick={header.column.getToggleSortingHandler()}
-                      className="inline-flex items-center gap-1"
+                      className="inline-flex w-full items-center gap-1 overflow-hidden whitespace-nowrap text-ellipsis"
                     >
                       {header.isPlaceholder
                         ? null
@@ -185,9 +199,11 @@ const Standard1 = ({
                       <td
                         key={cell.id}
                         style={{ width: cell.column.getSize() }}
-                        className="border px-2 py-1 whitespace-nowrap"
+                        className="border px-2 py-1 whitespace-nowrap overflow-hidden text-ellipsis"
                       >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        <div className="w-full overflow-hidden text-ellipsis whitespace-nowrap">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </div>
                       </td>
                     ))}
                   </tr>
