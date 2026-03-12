@@ -18,6 +18,12 @@ const DEFAULT_PLOT_COLOR = "#16a34a";
 const FILTERED_PLOT_COLOR = "#f97316";
 const SELECTED_PLOT_COLOR = "#facc15";
 
+const polygonGeometryFilter = [
+  "any",
+  ["==", ["geometry-type"], "Polygon"],
+  ["==", ["geometry-type"], "MultiPolygon"],
+];
+
 const standard1PointsLayer: CircleLayerSpecification = {
   id: STANDARD1_POINT_LAYER_ID,
   type: "circle",
@@ -36,7 +42,7 @@ const standard1PolygonFillLayer: FillLayerSpecification = {
   id: STANDARD1_POLYGON_FILL_LAYER_ID,
   type: "fill",
   source: STANDARD1_SOURCE_ID,
-  filter: ["==", ["geometry-type"], "Polygon"],
+  filter: polygonGeometryFilter,
   paint: {
     "fill-color": DEFAULT_PLOT_COLOR,
     "fill-opacity": 0.2,
@@ -47,7 +53,7 @@ const standard1PolygonOutlineLayer: LineLayerSpecification = {
   id: STANDARD1_POLYGON_OUTLINE_LAYER_ID,
   type: "line",
   source: STANDARD1_SOURCE_ID,
-  filter: ["==", ["geometry-type"], "Polygon"],
+  filter: polygonGeometryFilter,
   paint: {
     "line-color": DEFAULT_PLOT_COLOR,
     "line-width": 2,
