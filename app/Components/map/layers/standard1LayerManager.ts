@@ -13,6 +13,11 @@ export const STANDARD1_SOURCE_ID = "standard1-source";
 export const STANDARD1_POINT_LAYER_ID = "standard1-points-layer";
 export const STANDARD1_POLYGON_FILL_LAYER_ID = "standard1-polygons-fill-layer";
 export const STANDARD1_POLYGON_OUTLINE_LAYER_ID = "standard1-polygons-outline-layer";
+const STANDARD1_LAYER_IDS = [
+  STANDARD1_POINT_LAYER_ID,
+  STANDARD1_POLYGON_FILL_LAYER_ID,
+  STANDARD1_POLYGON_OUTLINE_LAYER_ID,
+];
 
 const DEFAULT_PLOT_COLOR = "#16a34a";
 const FILTERED_PLOT_COLOR = "#f97316";
@@ -90,6 +95,15 @@ export function updateStandard1LayerColors(
   }
   if (map.getLayer(STANDARD1_POLYGON_OUTLINE_LAYER_ID)) {
     map.setPaintProperty(STANDARD1_POLYGON_OUTLINE_LAYER_ID, "line-color", colorExpression);
+  }
+}
+
+export function setStandard1LayerVisibility(map: Map, isVisible: boolean) {
+  const visibility = isVisible ? "visible" : "none";
+
+  for (const layerId of STANDARD1_LAYER_IDS) {
+    if (!map.getLayer(layerId)) continue;
+    map.setLayoutProperty(layerId, "visibility", visibility);
   }
 }
 

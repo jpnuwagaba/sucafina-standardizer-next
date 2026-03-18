@@ -65,6 +65,7 @@ const Standard1 = ({
 }: Standard1Props) => {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = React.useState("");
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     // New uploads should start from a clean table view.
@@ -114,13 +115,37 @@ const Standard1 = ({
     onVisibleRowsChange(visibleRows);
   }, [onVisibleRowsChange, visibleRows]);
 
+  React.useEffect(() => {
+    const handleSearchShortcut = (event: KeyboardEvent) => {
+      const isSearchShortcut =
+        (event.ctrlKey || event.metaKey) &&
+        !event.altKey &&
+        event.key.toLowerCase() === "k";
+
+      if (!isSearchShortcut) return;
+
+      event.preventDefault();
+
+      const input = searchInputRef.current;
+      if (!input) return;
+
+      input.focus();
+      const cursorPosition = input.value.length;
+      input.setSelectionRange(cursorPosition, cursorPosition);
+    };
+
+    window.addEventListener("keydown", handleSearchShortcut);
+    return () => window.removeEventListener("keydown", handleSearchShortcut);
+  }, []);
+
   return (
     <div className="h-full w-full overflow-hidden">
       <div className="flex items-center gap-2 pb-2">
         <input
+          ref={searchInputRef}
           value={globalFilter ?? ""}
           onChange={(event) => setGlobalFilter(event.target.value)}
-          placeholder="Search all columns..."
+          placeholder="Search Records or Press Ctrl+K"
           className="w-full max-w-sm rounded border px-2 py-1 text-sm"
         />
         <div className="ml-auto text-xs text-slate-600">

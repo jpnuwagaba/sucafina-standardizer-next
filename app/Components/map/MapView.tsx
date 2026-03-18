@@ -16,6 +16,8 @@ interface MapProps {
   className?: string;
   style?: React.CSSProperties;
   rows?: Standard1Row[];
+  layerVisible?: boolean;
+  extentFitTrigger?: number;
   filteredPlotIds?: string[];
   selectedRow?: Standard1Row | null;
   selectedRowTrigger?: number;
@@ -25,13 +27,19 @@ export default function MapView({
   className = "",
   style = {},
   rows = standard1Rows,
+  layerVisible = true,
+  extentFitTrigger = 0,
   filteredPlotIds = [],
   selectedRow = null,
   selectedRowTrigger = 0,
 }: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const { mapRef, mapError, isMapReady, currentStyle, styleRevision, setMapStyle } = useMapInstance(mapContainer);
-  const { onZoomIn, onZoomOut, onResetView } = useMapCamera(mapRef, rows);
+  const { onZoomIn, onZoomOut, onResetView, onResetNorth, onToggle3D, is3D, bearing } = useMapCamera(
+    mapRef,
+    rows,
+    isMapReady,
+  );
 
   useMapResize(mapContainer, mapRef);
   useStandard1DevelopmentLayer(
@@ -39,6 +47,8 @@ export default function MapView({
     isMapReady,
     styleRevision,
     rows,
+    layerVisible,
+    extentFitTrigger,
     filteredPlotIds,
     selectedRow,
     selectedRowTrigger,
@@ -65,6 +75,10 @@ export default function MapView({
         onZoomIn={onZoomIn}
         onZoomOut={onZoomOut}
         onResetView={onResetView}
+        onResetNorth={onResetNorth}
+        onToggle3D={onToggle3D}
+        is3D={is3D}
+        currentBearing={bearing}
       />
 
       {mapError ? (

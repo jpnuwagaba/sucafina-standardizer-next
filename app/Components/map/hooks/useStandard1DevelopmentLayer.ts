@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { buildStandard1FeatureCollection, type Standard1Row } from "@/app/data/standard1";
 
 import {
   removeStandard1Layer,
+  setStandard1LayerVisibility,
   upsertStandard1Layer,
   updateStandard1LayerColors,
 } from "../layers/standard1LayerManager";
@@ -35,10 +36,13 @@ export function useStandard1DevelopmentLayer(
   isMapReady: boolean,
   styleRevision: number,
   rows: Standard1Row[],
+  layerVisible: boolean,
+  extentFitTrigger: number,
   filteredPlotIds: string[],
   selectedRow: Standard1Row | null,
   selectedRowTrigger: number,
 ) {
+  const lastAppliedExtentTriggerRef = useRef<number | null>(null);
   const featureCollection = useMemo(
     () => buildStandard1FeatureCollection(rows),
     [rows],
@@ -84,6 +88,15 @@ export function useStandard1DevelopmentLayer(
   useEffect(() => {
     if (!isMapReady || !mapRef.current) return;
 
+    setStandard1LayerVisibility(mapRef.current, layerVisible);
+  }, [isMapReady, layerVisible, mapRef, styleRevision]);
+
+  useEffect(() => {
+    if (!isMapReady || !mapRef.current) return;
+    if (lastAppliedExtentTriggerRef.current === extentFitTrigger) return;
+
+    lastAppliedExtentTriggerRef.current = extentFitTrigger;
+
     const bounds = getFeatureCollectionBounds(extentFeatureCollection);
     if (!bounds) return;
 
@@ -92,7 +105,7 @@ export function useStandard1DevelopmentLayer(
       maxZoom: 18,
       duration: 500,
     });
-  }, [extentFeatureCollection, isMapReady, mapRef]);
+  }, [extentFeatureCollection, extentFitTrigger, isMapReady, mapRef]);
 
   useEffect(() => {
     if (!isMapReady || !mapRef.current || !selectedRow) return;

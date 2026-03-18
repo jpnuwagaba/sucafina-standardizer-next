@@ -7,7 +7,7 @@ import type { Standard1Row } from "@/app/data/standard1";
 import { parseStandard1CsvFile } from "@/lib/ingestion/standard1Csv";
 
 type DropBoxProps = {
-  onDataLoaded: (rows: Standard1Row[]) => void;
+  onDataLoaded: (rows: Standard1Row[], fileName: string) => void;
   onUnsupportedData: () => void;
 };
 
@@ -25,7 +25,7 @@ export default function DropBox({ onDataLoaded, onUnsupportedData }: DropBoxProp
         return;
       }
 
-      onDataLoaded(result.rows);
+      onDataLoaded(result.rows, file.name);
     },
     [onDataLoaded, onUnsupportedData],
   );
