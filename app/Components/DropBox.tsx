@@ -4,10 +4,10 @@ import React from "react";
 import { Upload } from "lucide-react";
 
 import type { Standard1Row } from "@/app/data/standard1";
-import { parseStandard1CsvFile } from "@/lib/ingestion/standard1Csv";
+import { parseStandard1CsvFile, type UploadedCsvTable } from "@/lib/ingestion/standard1Csv";
 
 type DropBoxProps = {
-  onDataLoaded: (rows: Standard1Row[], fileName: string) => void;
+  onDataLoaded: (rows: Standard1Row[], table: UploadedCsvTable, fileName: string) => void;
   onUnsupportedData: () => void;
 };
 
@@ -25,7 +25,7 @@ export default function DropBox({ onDataLoaded, onUnsupportedData }: DropBoxProp
         return;
       }
 
-      onDataLoaded(result.rows, file.name);
+      onDataLoaded(result.rows, result.table, file.name);
     },
     [onDataLoaded, onUnsupportedData],
   );

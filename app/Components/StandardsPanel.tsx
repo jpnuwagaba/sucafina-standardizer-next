@@ -8,6 +8,8 @@ type StandardTab = "standard1" | "impact";
 
 type StandardsPanelProps = {
   rows: Standard1Row[];
+  tableColumns?: string[];
+  tableRows?: string[][];
   onVisibleRowsChange?: (rows: Standard1Row[]) => void;
   onRowSelect?: (row: Standard1Row | null) => void;
   selectedRow?: Standard1Row | null;
@@ -15,6 +17,8 @@ type StandardsPanelProps = {
 
 const StandardsPanel = ({
   rows,
+  tableColumns = [],
+  tableRows = [],
   onVisibleRowsChange,
   onRowSelect,
   selectedRow = null,
@@ -49,6 +53,8 @@ const StandardsPanel = ({
           <div className="h-full w-full p-2">
             <Standard1
               rows={rows}
+              tableColumns={tableColumns}
+              tableRows={tableRows}
               onVisibleRowsChange={onVisibleRowsChange}
               onRowSelect={onRowSelect}
               selectedRow={selectedRow}

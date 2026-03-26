@@ -399,9 +399,26 @@ const standard1SeedRows: Standard1Row[] = [
 ];
 
 function resolvePreferredPlotWkt(row: Standard1Row): string {
-  if (parseWktGeometry(row.plot_gps_polygon)) return row.plot_gps_polygon;
-  if (parseWktGeometry(row.plot_gps_point)) return row.plot_gps_point;
-  return row.plot_wkt;
+  const candidates = [row.plot_gps_polygon, row.plot_gps_point, row.plot_wkt]
+    .map((value) => {
+      const trimmed = value.trim();
+      if (!trimmed) return null;
+
+      const geometry = parseWktGeometry(trimmed);
+      if (!geometry) return null;
+
+      return { value: trimmed, geometry };
+    })
+    .filter(
+      (candidate): candidate is { value: string; geometry: ParsedWktGeometry } => candidate !== null,
+    );
+
+  const preferred =
+    candidates.find((candidate) => candidate.geometry.type === "MultiPolygon") ||
+    candidates.find((candidate) => candidate.geometry.type === "Polygon") ||
+    candidates.find((candidate) => candidate.geometry.type === "Point");
+
+  return preferred?.value || row.plot_wkt;
 }
 
 export const standard1Rows: Standard1Row[] = standard1SeedRows.map((row) => ({

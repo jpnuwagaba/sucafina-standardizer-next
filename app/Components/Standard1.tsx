@@ -10,55 +10,67 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { ArrowUpNarrowWide, ArrowDownWideNarrow } from "lucide-react";
+
 import type { Standard1Row } from "@/app/data/standard1";
-import { ArrowUpNarrowWide, ArrowDownWideNarrow } from 'lucide-react';
 
 type Standard1Props = {
   rows: Standard1Row[];
+  tableColumns?: string[];
+  tableRows?: string[][];
   onVisibleRowsChange?: (rows: Standard1Row[]) => void;
   onRowSelect?: (row: Standard1Row | null) => void;
   selectedRow?: Standard1Row | null;
 };
 
-const columns: ColumnDef<Standard1Row>[] = [
-  { accessorKey: "sucafina_plot_id", header: "sucafina_plot_id" },
-  { accessorKey: "supplier_plot_id", header: "supplier_plot_id" },
-  { accessorKey: "farmer_id", header: "farmer_id" },
-  { accessorKey: "supplier_code", header: "supplier_code" },
-  { accessorKey: "plot_region", header: "plot_region" },
-  { accessorKey: "plot_district", header: "plot_district" },
-  { accessorKey: "plot_area_ha", header: "plot_area_ha" },
-  { accessorKey: "plot_longitude", header: "plot_longitude" },
-  { accessorKey: "plot_latitude", header: "plot_latitude" },
-  { accessorKey: "plot_gps_point", header: "plot_gps_point" },
-  {
-    accessorKey: "plot_gps_polygon",
-    header: "plot_gps_polygon",
-    size: 220,
-    minSize: 80,
-    maxSize: 320,
-  },
-  { accessorKey: "plot_wkt", header: "plot_wkt" },
-  { accessorKey: "is_geodata_validated", header: "is_geodata_validated" },
-  {
-    accessorKey: "is_cafe_practices_certified",
-    header: "is_cafe_practices_certified",
-  },
-  { accessorKey: "is_rfa_utz_certified", header: "is_rfa_utz_certified" },
-  { accessorKey: "is_impact_certified", header: "is_impact_certified" },
-  { accessorKey: "is_organic_certified", header: "is_organic_certified" },
-  { accessorKey: "is_4c_certified", header: "is_4c_certified" },
-  { accessorKey: "is_fairtrade_certified", header: "is_fairtrade_certified" },
-  {
-    accessorKey: "other_certification_name",
-    header: "other_certification_name",
-  },
-  { accessorKey: "plot_supply_chain", header: "plot_supply_chain" },
-  { accessorKey: "plot_farmer_group", header: "plot_farmer_group" },
-];
+type TableRow = {
+  standardRow: Standard1Row;
+  csvValues: string[];
+};
+
+const STANDARD1_FALLBACK_COLUMNS = [
+  "sucafina_plot_id",
+  "supplier_plot_id",
+  "farmer_id",
+  "supplier_code",
+  "plot_region",
+  "plot_district",
+  "plot_area_ha",
+  "plot_longitude",
+  "plot_latitude",
+  "plot_gps_point",
+  "plot_gps_polygon",
+  "plot_wkt",
+  "is_geodata_validated",
+  "is_cafe_practices_certified",
+  "is_rfa_utz_certified",
+  "is_impact_certified",
+  "is_organic_certified",
+  "is_4c_certified",
+  "is_fairtrade_certified",
+  "other_certification_name",
+  "plot_supply_chain",
+  "plot_farmer_group",
+] as const;
+
+function toDisplayText(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  return String(value);
+}
+
+const fallbackColumns: ColumnDef<TableRow>[] = STANDARD1_FALLBACK_COLUMNS.map((columnName) => ({
+  id: columnName,
+  accessorFn: (row) => toDisplayText((row.standardRow as Record<string, unknown>)[columnName]),
+  header: columnName,
+  size: columnName === "plot_gps_polygon" ? 220 : 160,
+  minSize: columnName === "plot_gps_polygon" ? 80 : 60,
+  maxSize: columnName === "plot_gps_polygon" ? 320 : 500,
+}));
 
 const Standard1 = ({
   rows,
+  tableColumns = [],
+  tableRows = [],
   onVisibleRowsChange,
   onRowSelect,
   selectedRow = null,
@@ -67,14 +79,44 @@ const Standard1 = ({
   const [globalFilter, setGlobalFilter] = React.useState("");
   const searchInputRef = React.useRef<HTMLInputElement>(null);
 
+  const hasUploadedRows = rows.length > 0;
+  const hasCsvColumns = tableColumns.length > 0;
+
   React.useEffect(() => {
     // New uploads should start from a clean table view.
     setSorting([]);
     setGlobalFilter("");
-  }, [rows]);
+  }, [rows, tableColumns]);
+
+  const data = React.useMemo<TableRow[]>(() => {
+    return rows.map((standardRow, rowIndex) => ({
+      standardRow,
+      csvValues: tableColumns.map((_, columnIndex) => tableRows[rowIndex]?.[columnIndex] ?? ""),
+    }));
+  }, [rows, tableColumns, tableRows]);
+
+  const columns = React.useMemo<ColumnDef<TableRow>[]>(() => {
+    if (!hasCsvColumns) {
+      return fallbackColumns;
+    }
+
+    return tableColumns.map((columnName, columnIndex) => {
+      const normalizedColumnName = columnName.trim();
+      const estimatedWidth = Math.max(Math.min((normalizedColumnName.length + 4) * 10, 420), 110);
+
+      return {
+        id: `csv-${columnIndex}`,
+        accessorFn: (row) => row.csvValues[columnIndex] ?? "",
+        header: columnName,
+        size: estimatedWidth,
+        minSize: 70,
+        maxSize: 700,
+      } satisfies ColumnDef<TableRow>;
+    });
+  }, [hasCsvColumns, tableColumns]);
 
   const table = useReactTable({
-    data: rows,
+    data,
     columns,
     defaultColumn: {
       size: 160,
@@ -98,7 +140,12 @@ const Standard1 = ({
     columnResizeMode: "onChange",
   });
 
-  const visibleRows = table.getRowModel().rows.map((row) => row.original);
+  const totalRowCount = table.getCoreRowModel().rows.length;
+  const filteredRows = table.getRowModel().rows;
+  const filteredRowCount = filteredRows.length;
+  const showPlaceholderTable = !hasUploadedRows;
+  const showNoMatchingData = hasUploadedRows && filteredRowCount === 0;
+  const visibleRows = filteredRows.map((row) => row.original.standardRow);
   const lastVisibleRowsKeyRef = React.useRef<string>("");
 
   React.useEffect(() => {
@@ -145,107 +192,115 @@ const Standard1 = ({
           ref={searchInputRef}
           value={globalFilter ?? ""}
           onChange={(event) => setGlobalFilter(event.target.value)}
-          placeholder="Search Records or Press Ctrl+K"
-          className="w-full max-w-sm rounded border px-2 py-1 text-sm"
+          disabled={!hasUploadedRows}
+          placeholder={hasUploadedRows ? "Search Records or Press Ctrl+K" : "Upload CSV to search records"}
+          className={`w-full max-w-sm rounded border px-2 py-1 text-sm ${hasUploadedRows ? "" : "cursor-not-allowed bg-slate-100 text-slate-500"}`}
         />
         <div className="ml-auto text-xs text-slate-600">
-          {table.getFilteredRowModel().rows.length} of {table.getCoreRowModel().rows.length} rows
+          {showPlaceholderTable ? "No uploaded rows yet" : `${filteredRowCount} of ${totalRowCount} rows`}
         </div>
-        {/* vertical divider */}
-        <div className="w-px h-4 bg-slate-300" />
+        <div className="h-4 w-px bg-slate-300" />
         <div className="flex flex-row items-center">
-          <div className="flex flex-row items-center mr-2">
-            <div className="w-3 h-3 rounded-full bg-[#16a34a] mr-1" />
+          <div className="mr-2 flex flex-row items-center">
+            <div className="mr-1 h-3 w-3 rounded-full bg-[#16a34a]" />
             <div className="text-xs text-slate-600">Default</div>
           </div>
-          <div className="flex flex-row items-center mr-2">
-            <div className="w-3 h-3 rounded-full bg-[#facc15] mr-1" />
+          <div className="mr-2 flex flex-row items-center">
+            <div className="mr-1 h-3 w-3 rounded-full bg-[#facc15]" />
             <div className="text-xs text-slate-600">Selected</div>
           </div>
-          <div className="flex flex-row items-center mr-2">
-            <div className="w-3 h-3 rounded-full bg-[#f97316] mr-1" />
+          <div className="mr-2 flex flex-row items-center">
+            <div className="mr-1 h-3 w-3 rounded-full bg-[#f97316]" />
             <div className="text-xs text-slate-600">Filtered</div>
           </div>
         </div>
       </div>
-      <div className="h-[calc(100%-40px)] w-full overflow-auto">
-        <table
-          className="min-w-full table-fixed border-collapse text-xs"
-          style={{ width: table.getTotalSize() }}
-        >
-          <thead className="sticky top-0 z-10 bg-white">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    style={{ width: header.getSize() }}
-                    className="relative border px-2 py-1 text-left font-semibold whitespace-nowrap overflow-hidden text-ellipsis"
-                  >
-                    <button
-                      type="button"
-                      onClick={header.column.getToggleSortingHandler()}
-                      className="inline-flex w-full items-center gap-1 overflow-hidden whitespace-nowrap text-ellipsis"
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                      {header.column.getIsSorted() === "asc" && <ArrowUpNarrowWide className="w-4 h-4" />}
-                      {header.column.getIsSorted() === "desc" && <ArrowDownWideNarrow className="w-4 h-4" />}
-                    </button>
-                    <div
-                      onMouseDown={header.getResizeHandler()}
-                      onTouchStart={header.getResizeHandler()}
-                      className="absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none bg-transparent hover:bg-gray-300"
-                    />
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row) => {
-                const isSelected =
-                  selectedRow?.sucafina_plot_id === row.original.sucafina_plot_id;
 
-                return (
-                  <tr
-                    key={row.id}
-                    onClick={() => onRowSelect?.(isSelected ? null : row.original)}
-                    aria-selected={isSelected}
-                    className={`cursor-pointer hover:bg-slate-100 ${isSelected ? "bg-[#00777f]/20 hover:bg-sky-100" : ""
-                      }`}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <td
-                        key={cell.id}
-                        style={{ width: cell.column.getSize() }}
-                        className="border px-2 py-1 whitespace-nowrap overflow-hidden text-ellipsis"
+      <div className="h-[calc(100%-40px)] w-full overflow-auto">
+        {showPlaceholderTable ? (
+          <div className="h-full w-full overflow-hidden rounded border border-slate-200 bg-white">
+            <div className="border-b border-slate-200 py-1 text-center text-sm text-slate-400">
+              empty
+            </div>
+          </div>
+        ) : (
+          <table
+            className="min-w-full table-fixed border-collapse text-xs"
+            style={{ width: table.getTotalSize() }}
+          >
+            <thead className="sticky top-0 z-10 bg-white">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      style={{ width: header.getSize() }}
+                      className="relative overflow-hidden whitespace-nowrap border px-2 py-1 text-left font-semibold text-ellipsis"
+                    >
+                      <button
+                        type="button"
+                        onClick={header.column.getToggleSortingHandler()}
+                        className="inline-flex w-full items-center gap-1 overflow-hidden whitespace-nowrap text-ellipsis"
                       >
-                        <div className="w-full overflow-hidden text-ellipsis whitespace-nowrap">
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </div>
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td
-                  colSpan={columns.length}
-                  className="border px-2 py-4 text-center text-muted-foreground"
-                >
-                  No matching data
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                        {header.column.getIsSorted() === "asc" && <ArrowUpNarrowWide className="h-4 w-4" />}
+                        {header.column.getIsSorted() === "desc" && <ArrowDownWideNarrow className="h-4 w-4" />}
+                      </button>
+                      <div
+                        onMouseDown={header.getResizeHandler()}
+                        onTouchStart={header.getResizeHandler()}
+                        className="absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none bg-transparent hover:bg-gray-300"
+                      />
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {filteredRowCount > 0 ? (
+                filteredRows.map((row) => {
+                  const isSelected =
+                    selectedRow?.sucafina_plot_id === row.original.standardRow.sucafina_plot_id;
+
+                  return (
+                    <tr
+                      key={row.id}
+                      onClick={() => onRowSelect?.(isSelected ? null : row.original.standardRow)}
+                      aria-selected={isSelected}
+                      className={`cursor-pointer hover:bg-slate-100 ${isSelected ? "bg-[#00777f]/20 hover:bg-sky-100" : ""}`}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <td
+                          key={cell.id}
+                          style={{ width: cell.column.getSize() }}
+                          className="overflow-hidden whitespace-nowrap border px-2 py-1 text-ellipsis"
+                        >
+                          <div className="w-full overflow-hidden whitespace-nowrap text-ellipsis">
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </div>
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })
+              ) : showNoMatchingData ? (
+                <tr>
+                  <td
+                    colSpan={Math.max(columns.length, 1)}
+                    className="border px-2 py-4 text-center text-muted-foreground"
+                  >
+                    No matching data
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

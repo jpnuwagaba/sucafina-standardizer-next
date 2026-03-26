@@ -10,11 +10,13 @@ import Map from './Map'
 import DropBox from './DropBox'
 import StandardsPanel from './StandardsPanel'
 import type { Standard1Row } from "@/app/data/standard1"
+import type { UploadedCsvTable } from "@/lib/ingestion/standard1Csv"
 
 type LayerItem = {
     id: string;
     name: string;
     rows: Standard1Row[];
+    table: UploadedCsvTable;
     isVisible: boolean;
 };
 
@@ -39,6 +41,10 @@ const Resizable = () => {
         () => activeLayer?.rows ?? [],
         [activeLayer],
     );
+    const activeLayerTable = React.useMemo(
+        () => activeLayer?.table ?? { columns: [], rows: [] },
+        [activeLayer],
+    );
     const mapRows = React.useMemo(
         () => (activeLayer?.isVisible ? allRows : []),
         [activeLayer, allRows],
@@ -49,7 +55,7 @@ const Resizable = () => {
         setSelectedRowTrigger((prev) => prev + 1);
     }, []);
 
-    const handleDataLoaded = React.useCallback((rows: Standard1Row[], fileName: string) => {
+    const handleDataLoaded = React.useCallback((rows: Standard1Row[], table: UploadedCsvTable, fileName: string) => {
         setShowUnsupportedAlert(false);
         const layerId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -64,6 +70,7 @@ const Resizable = () => {
                     id: layerId,
                     name: layerName,
                     rows,
+                    table,
                     isVisible: true,
                 },
             ];
@@ -82,10 +89,12 @@ const Resizable = () => {
         const isFilterActive = rows.length !== allRows.length;
         if (!isFilterActive) {
             setFilteredPlotIds([]);
+            setExtentFitTrigger((prev) => prev + 1);
             return;
         }
 
         setFilteredPlotIds(rows.map((row) => row.sucafina_plot_id));
+        setExtentFitTrigger((prev) => prev + 1);
     }, [allRows]);
 
     const handleLayerVisibilityChange = React.useCallback((layerId: string, isVisible: boolean) => {
@@ -254,6 +263,8 @@ const Resizable = () => {
                 <div className="h-full w-full p-2">
                     <StandardsPanel
                         rows={allRows}
+                        tableColumns={activeLayerTable.columns}
+                        tableRows={activeLayerTable.rows}
                         onVisibleRowsChange={handleVisibleRowsChange}
                         onRowSelect={handleRowSelect}
                         selectedRow={selectedRow}
