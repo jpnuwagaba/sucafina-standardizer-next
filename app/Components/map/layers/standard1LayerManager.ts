@@ -11,10 +11,12 @@ import type { Standard1FeatureCollection } from "@/app/data/standard1";
 
 export const STANDARD1_SOURCE_ID = "standard1-source";
 export const STANDARD1_POINT_LAYER_ID = "standard1-points-layer";
+export const STANDARD1_LINE_LAYER_ID = "standard1-lines-layer";
 export const STANDARD1_POLYGON_FILL_LAYER_ID = "standard1-polygons-fill-layer";
 export const STANDARD1_POLYGON_OUTLINE_LAYER_ID = "standard1-polygons-outline-layer";
 const STANDARD1_LAYER_IDS = [
   STANDARD1_POINT_LAYER_ID,
+  STANDARD1_LINE_LAYER_ID,
   STANDARD1_POLYGON_FILL_LAYER_ID,
   STANDARD1_POLYGON_OUTLINE_LAYER_ID,
 ];
@@ -27,6 +29,12 @@ const polygonGeometryFilter = [
   "any",
   ["==", ["geometry-type"], "Polygon"],
   ["==", ["geometry-type"], "MultiPolygon"],
+];
+
+const lineGeometryFilter = [
+  "any",
+  ["==", ["geometry-type"], "LineString"],
+  ["==", ["geometry-type"], "MultiLineString"],
 ];
 
 const standard1PointsLayer: CircleLayerSpecification = {
@@ -51,6 +59,18 @@ const standard1PolygonFillLayer: FillLayerSpecification = {
   paint: {
     "fill-color": DEFAULT_PLOT_COLOR,
     "fill-opacity": 0.2,
+  },
+};
+
+const standard1LineLayer: LineLayerSpecification = {
+  id: STANDARD1_LINE_LAYER_ID,
+  type: "line",
+  source: STANDARD1_SOURCE_ID,
+  filter: lineGeometryFilter,
+  paint: {
+    "line-color": DEFAULT_PLOT_COLOR,
+    "line-width": 3,
+    "line-opacity": 0.95,
   },
 };
 
@@ -89,6 +109,9 @@ export function updateStandard1LayerColors(
 
   if (map.getLayer(STANDARD1_POINT_LAYER_ID)) {
     map.setPaintProperty(STANDARD1_POINT_LAYER_ID, "circle-color", colorExpression);
+  }
+  if (map.getLayer(STANDARD1_LINE_LAYER_ID)) {
+    map.setPaintProperty(STANDARD1_LINE_LAYER_ID, "line-color", colorExpression);
   }
   if (map.getLayer(STANDARD1_POLYGON_FILL_LAYER_ID)) {
     map.setPaintProperty(STANDARD1_POLYGON_FILL_LAYER_ID, "fill-color", colorExpression);
@@ -130,6 +153,9 @@ export function upsertStandard1Layer(
   if (!map.getLayer(STANDARD1_POLYGON_OUTLINE_LAYER_ID)) {
     map.addLayer(standard1PolygonOutlineLayer);
   }
+  if (!map.getLayer(STANDARD1_LINE_LAYER_ID)) {
+    map.addLayer(standard1LineLayer);
+  }
   if (!map.getLayer(STANDARD1_POINT_LAYER_ID)) {
     map.addLayer(standard1PointsLayer);
   }
@@ -140,6 +166,9 @@ export function upsertStandard1Layer(
 export function removeStandard1Layer(map: Map) {
   if (map.getLayer(STANDARD1_POINT_LAYER_ID)) {
     map.removeLayer(STANDARD1_POINT_LAYER_ID);
+  }
+  if (map.getLayer(STANDARD1_LINE_LAYER_ID)) {
+    map.removeLayer(STANDARD1_LINE_LAYER_ID);
   }
   if (map.getLayer(STANDARD1_POLYGON_OUTLINE_LAYER_ID)) {
     map.removeLayer(STANDARD1_POLYGON_OUTLINE_LAYER_ID);

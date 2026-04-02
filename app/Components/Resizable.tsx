@@ -10,13 +10,13 @@ import Map from './Map'
 import DropBox from './DropBox'
 import StandardsPanel from './StandardsPanel'
 import type { Standard1Row } from "@/app/data/standard1"
-import type { UploadedCsvTable } from "@/lib/ingestion/standard1Csv"
+import type { UploadedTable } from "@/lib/ingestion/standard1File"
 
 type LayerItem = {
     id: string;
     name: string;
     rows: Standard1Row[];
-    table: UploadedCsvTable;
+    table: UploadedTable;
     isVisible: boolean;
 };
 
@@ -30,7 +30,7 @@ const Resizable = () => {
     const [filteredPlotIds, setFilteredPlotIds] = React.useState<string[]>([]);
     const [selectedRow, setSelectedRow] = React.useState<Standard1Row | null>(null);
     const [selectedRowTrigger, setSelectedRowTrigger] = React.useState(0);
-    const [showUnsupportedAlert, setShowUnsupportedAlert] = React.useState(false);
+    const [unsupportedAlertMessage, setUnsupportedAlertMessage] = React.useState<string | null>(null);
     const [activeSidePanelTab, setActiveSidePanelTab] = React.useState<SidePanelTab>("layers");
 
     const activeLayer = React.useMemo(
@@ -55,8 +55,8 @@ const Resizable = () => {
         setSelectedRowTrigger((prev) => prev + 1);
     }, []);
 
-    const handleDataLoaded = React.useCallback((rows: Standard1Row[], table: UploadedCsvTable, fileName: string) => {
-        setShowUnsupportedAlert(false);
+    const handleDataLoaded = React.useCallback((rows: Standard1Row[], table: UploadedTable, fileName: string) => {
+        setUnsupportedAlertMessage(null);
         const layerId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
         setLayers((previousLayers) => {
@@ -79,8 +79,8 @@ const Resizable = () => {
         setActiveSidePanelTab("layers");
     }, []);
 
-    const handleUnsupportedData = React.useCallback(() => {
-        setShowUnsupportedAlert(true);
+    const handleUnsupportedData = React.useCallback((reason: string) => {
+        setUnsupportedAlertMessage(reason);
     }, []);
 
     const handleVisibleRowsChange = React.useCallback((rows: Standard1Row[]) => {
@@ -139,13 +139,13 @@ const Resizable = () => {
                         <ResizablePanelGroup orientation="vertical">
                             <ResizablePanel defaultSize="50%">
                                 <div className="relative h-full border border-slate-200 bg-white">
-                                    {showUnsupportedAlert ? (
+                                    {unsupportedAlertMessage ? (
                                         <div className="absolute left-2 right-2 top-2 z-20 flex items-start justify-between gap-3 rounded border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-900 shadow-sm">
-                                            <span className="pt-0.5">Data format not supported</span>
+                                            <span className="pt-0.5">{unsupportedAlertMessage}</span>
                                             <button
                                                 type="button"
                                                 aria-label="Dismiss alert"
-                                                onClick={() => setShowUnsupportedAlert(false)}
+                                                onClick={() => setUnsupportedAlertMessage(null)}
                                                 className="rounded border border-rose-300 px-2 py-0.5 text-[11px] font-medium hover:bg-rose-100"
                                             >
                                                 Dismiss

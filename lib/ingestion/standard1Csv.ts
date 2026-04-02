@@ -1,3 +1,7 @@
+export * from "./standard1File";
+
+/* Legacy shim kept for compatibility with older imports.
+
 import type { Standard1Row } from "@/app/data/standard1";
 import { parseWktGeometry, type ParsedWktGeometry } from "@/lib/geospatial/wkt";
 
@@ -288,3 +292,4 @@ function parseCsv(content: string): string[][] {
 
   return rows;
 }
+*/

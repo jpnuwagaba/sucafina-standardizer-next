@@ -4,11 +4,11 @@ import React from "react";
 import { Upload } from "lucide-react";
 
 import type { Standard1Row } from "@/app/data/standard1";
-import { parseStandard1CsvFile, type UploadedCsvTable } from "@/lib/ingestion/standard1Csv";
+import { parseStandard1File, type UploadedTable } from "@/lib/ingestion/standard1File";
 
 type DropBoxProps = {
-  onDataLoaded: (rows: Standard1Row[], table: UploadedCsvTable, fileName: string) => void;
-  onUnsupportedData: () => void;
+  onDataLoaded: (rows: Standard1Row[], table: UploadedTable, fileName: string) => void;
+  onUnsupportedData: (reason: string) => void;
 };
 
 export default function DropBox({ onDataLoaded, onUnsupportedData }: DropBoxProps) {
@@ -19,9 +19,9 @@ export default function DropBox({ onDataLoaded, onUnsupportedData }: DropBoxProp
     async (file: File | null) => {
       if (!file) return;
 
-      const result = await parseStandard1CsvFile(file);
+      const result = await parseStandard1File(file);
       if (!result.ok) {
-        onUnsupportedData();
+        onUnsupportedData(result.reason);
         return;
       }
 
@@ -69,13 +69,13 @@ export default function DropBox({ onDataLoaded, onUnsupportedData }: DropBoxProp
         >
           Browse Files
         </button>
-        {/* <div className="text-xs text-slate-500">
-          Required: CSV with all 22 Standard1 columns.
-        </div> */}
+        <div className="text-xs text-slate-500">
+          Supported: CSV, GeoJSON, JSON, and KML.
+        </div>
         <input
           ref={fileInputRef}
           type="file"
-          accept=".csv,text/csv"
+          accept=".csv,.geojson,.json,.kml,text/csv,application/geo+json,application/json,application/vnd.google-earth.kml+xml"
           className="hidden"
           onChange={(event) => {
             const file = event.target.files?.[0] ?? null;

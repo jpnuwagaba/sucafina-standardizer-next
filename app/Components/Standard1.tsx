@@ -193,7 +193,7 @@ const Standard1 = ({
           value={globalFilter ?? ""}
           onChange={(event) => setGlobalFilter(event.target.value)}
           disabled={!hasUploadedRows}
-          placeholder={hasUploadedRows ? "Search Records or Press Ctrl+K" : "Upload CSV to search records"}
+          placeholder={hasUploadedRows ? "Search Records or Press Ctrl+K" : "Upload map data to search records"}
           className={`w-full max-w-sm rounded border px-2 py-1 text-sm ${hasUploadedRows ? "" : "cursor-not-allowed bg-slate-100 text-slate-500"}`}
         />
         <div className="ml-auto text-xs text-slate-600">

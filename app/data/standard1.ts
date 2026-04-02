@@ -416,6 +416,8 @@ function resolvePreferredPlotWkt(row: Standard1Row): string {
   const preferred =
     candidates.find((candidate) => candidate.geometry.type === "MultiPolygon") ||
     candidates.find((candidate) => candidate.geometry.type === "Polygon") ||
+    candidates.find((candidate) => candidate.geometry.type === "MultiLineString") ||
+    candidates.find((candidate) => candidate.geometry.type === "LineString") ||
     candidates.find((candidate) => candidate.geometry.type === "Point");
 
   return preferred?.value || row.plot_wkt;
